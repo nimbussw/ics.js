@@ -41,8 +41,10 @@ var ics = function() {
          * @param  {string} location    Location of event
          * @param  {string} begin       Beginning date of event
          * @param  {string} stop        Ending date of event
+         * @param  {number} before      Amount of time before event to trigger alarm
+         * @param  {string} unit        Unit of time for alarm trigger
          */
-        'addEvent': function(subject, description, location, begin, stop) {
+        'addEvent': function(subject, description, location, begin, stop, before, unit) {
             // I'm not in the mood to make these optional... So they are all required
             if (typeof subject === 'undefined' ||
                 typeof description === 'undefined' ||
@@ -90,12 +92,41 @@ var ics = function() {
                 'DTEND;VALUE=DATE:' + end,
                 'LOCATION:' + location,
                 'SUMMARY;LANGUAGE=en-us:' + subject,
-                'TRANSP:TRANSPARENT',
+                'TRANSP:TRANSPARENT'
+            ].concat(
+                this.createAlarm(before, unit, description)
+            ).concat([
                 'END:VEVENT'
-            ].join(SEPARATOR);
+            ]).join(SEPARATOR);
 
             calendarEvents.push(calendarEvent);
             return calendarEvent;
+        },
+
+        /**
+         * Creates alarms for calendar event
+         * @param  {number} before      Amount of time before event to trigger alarm
+         * @param  {string} unit        Unit of time for alarm trigger
+         * @param  {string} description Description of event
+         */
+        'createAlarm': function (before, unit, description) {
+            if (typeof before === 'undefined' || typeof unit === 'undefined') {
+                return [];
+            };
+
+            description = description || 'Reminder';
+
+            var alarm = [
+                'BEGIN:VALARM',
+                'TRIGGER:-PT' + before + unit,
+                'REPEAT:1',
+                'DURATION:PT15M',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:' + description,
+                'END:VALARM'
+            ];
+
+            return alarm;
         },
 
         /**
